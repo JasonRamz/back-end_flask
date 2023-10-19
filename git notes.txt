@@ -1,0 +1,11 @@
+
+# .gitignore files specifies files and folders that should be ignore
+
+#create a repository git init
+
+#to create snapshots git add -A 
+git commit -m"any massage"
+
+#to check the status 
+git log
+#use the q to close the log
