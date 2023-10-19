@@ -35,4 +35,18 @@ def about():
     return json.dumps(me)
 
 
+# get /api/catalog
+# return the catalog dictionary as json
+@app.get("/api/catalog")
+def catalog():
+    return json.dumps(catalog)
+
+
+# get /api/products/
+# return the products dictionary as json
+@app.get("/api/products")
+def products():
+    return json.dumps(products)
+
+
 app.run(debug=True)
