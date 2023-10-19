@@ -1,3 +1,38 @@
-# test change
+from flask import Flask
+from config import me
+import json
 
-print("Server")
+app = Flask(__name__)
+
+
+@app.get('/')
+def index():
+    return 'Hello World!'
+
+
+@app.get('/test')
+def anything():
+    return "this is another page"
+
+
+#########################
+########### API##########
+#########################
+
+@app.get("/api/version")
+def version():
+    v = {
+        "version": "1.0.0",
+        "name": "Cacahuate"
+    }
+    return json.dumps(v)
+
+
+# get /api/about
+# return the me dictionary as json
+@app.get("/api/about")
+def about():
+    return json.dumps(me)
+
+
+app.run(debug=True)
