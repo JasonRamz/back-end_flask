@@ -58,3 +58,28 @@ catalog = [
         "_id": "Thing8"
     }
 ]
+
+
+coupon_codes = [
+    {
+        "code": "10OFF",
+        "discount": 10
+    },
+    {
+        "code": "20OFF",
+        "discount": 20
+    },
+    {
+        "code": "30OFF",
+        "discount": 30
+    },
+    {
+        "code": "40OFF",
+        "discount": 40
+    },
+    {
+        "code": "50OFF",
+        "discount": 50
+    }
+]
+

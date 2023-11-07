@@ -1,6 +1,6 @@
-from flask import Flask, request
-from config import me
-from mock_data import catalog
+from flask import Flask, request, abort
+from config import me, db
+from mock_data import catalog, coupon_codes
 import json
 
 app = Flask(__name__)
@@ -20,6 +20,9 @@ def anything():
 ########### API##########
 #########################
 # TODO: create a catalog dictionary
+def fix_id(record):
+    record["_id"] = str(record["_id"])
+    return record
 
 
 @app.get("/api/version")
@@ -42,7 +45,14 @@ def about():
 # return the catalog dictionary as json
 @app.get("/api/catalog")
 def get_catalog():
-    return json.dumps(catalog)
+    cursor = db.products.find({})
+    results = []
+
+    for prod in cursor:
+        results.append(fix_id(prod))
+    return json.dumps(results)
+# cursor is the result of the reading of the database
+# but is a simpler version of list version of the database
 
 
 # get /api/products/
@@ -51,10 +61,10 @@ def get_catalog():
 def save_products():
     product = request.get_json()
 
-    product["_id"] = len(catalog)
-    catalog.append(product)
+    # save product to DB
+    db.products.insert_one(product)
 
-    return json.dumps(product)
+    return json.dumps(fix_id(product))
 
 # create a get /api/report/total
 # that sends the total value of your catalog(sum of all prices)
@@ -62,21 +72,119 @@ def save_products():
 
 @app.get("/api/report/total")
 def get_report_total():
+    cursor = db.products.find({})
     total = 0
-    for prod in catalog:
+    for prod in cursor:
         total += prod["price"]
-    return json.dumps(total)
+
+    result = {
+        "report": "total",
+        "value": total
+    }
+    return json.dumps(result)
 
 
 # get all products for a given category
 @app.get("/api/products/<cat>")
-def get_products_by_category(cat):
+def get_by_category(cat):
     # print(request.args)
+    cursor = db.products.find({"category": cat})
     results = []
-    for prod in catalog:
-        if (prod["category"] == cat):
-            results.append(prod)
+    for prod in cursor:
+        fix_id(prod)
+        results.append(prod)
+    return json.dumps(results)
+
+    # get search <term>
+
+
+@app.get("/api/products/search/<term>")
+def product_search(term):
+    results = []
+    cursor = db.products.find({"title": {"$regex": term, "$options": "i"}})
+    for prod in cursor:
+        fix_id(prod)
+        results.append(prod)
+
     return json.dumps(results)
 
 
-app.run(debug=True)
+# create an endpoint to get all products with a price
+# lower or equal than a given number
+
+
+@app.get("/api/products/lower/<price>")
+def product_lower(price):
+    results = []
+    real_price = float(price)
+    cursor = db.products.find({"price": {"$lte": real_price}})
+
+    for prod in cursor:
+        fix_id(prod)
+        results.append(prod)
+    return json.dumps(results)
+
+
+# get price greater or equal
+@app.get("/api/products/greater/<price>")
+def product_greater(price):
+    results = []
+    real_price = float(price)
+    cursor = db.products.find({"price": {"$gte": real_price}})
+
+    for prod in cursor:
+        fix_id(prod)
+        results.append(prod)
+    return json.dumps(results)
+#########################
+######## Coupons##########
+#########################
+# /api/coupons
+
+
+@app.get("/api/coupons")
+def get_coupons():
+    cursor = db.coupons.find({})
+    coupons = []
+    for coupon in cursor:
+        fix_id(coupon)
+        coupons.append(coupon)
+    return json.dumps(coupons)
+
+
+@app.post("/api/coupons")
+def save_coupons():
+    coupon = request.get_json()
+    # save the coupon to the DB
+    db.coupons.insert_one(coupon)
+
+    return json.dumps(coupon)
+
+# get /api/coupons/<code>
+# coupon can be found if applied well
+
+
+@app.get("/api/coupons/<code>")
+def search_coupon(code):
+    for coupon in coupon_codes:
+        if coupon["code"].lower() == code.lower():
+            return json.dumps(coupon)
+    return abort(404, "Coupon not found, PLEASE TRY AGAIN!!")
+
+# get /api/coupons/apply/<code>
+# return the discount amount
+
+
+@app.get("/api/coupons/apply/<code>")
+def apply_coupon(code):
+    coupon = db.coupons.find_one(
+        {"code": {'$regex': f"^{code}$", '$options': "i"}})
+    if not coupon:
+        return abort(404, "Coupon not found, PLEASE TRY AGAIN!!")
+
+    fix_id(coupon)
+    return json.dumps(coupon)
+# CRUD
+# create read update delete
+
+# app.run(debug=True)

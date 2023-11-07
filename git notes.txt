@@ -42,3 +42,8 @@ venv\Scripts\activate
 # mac:
 
 source venv/bin/activate
+
+#to start flask app
+activate venv/bin/activate
+then flask --app server run --debug
+and you will start the flask app
