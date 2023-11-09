@@ -2,8 +2,10 @@ from flask import Flask, request, abort
 from config import me, db
 from mock_data import catalog, coupon_codes
 import json
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)  # warning disable CORS policy - DEV ONLY
 
 
 @app.get('/')
@@ -157,7 +159,7 @@ def save_coupons():
     coupon = request.get_json()
     # save the coupon to the DB
     db.coupons.insert_one(coupon)
-
+    fix_id(coupon)
     return json.dumps(coupon)
 
 # get /api/coupons/<code>
@@ -188,3 +190,4 @@ def apply_coupon(code):
 # create read update delete
 
 # app.run(debug=True)
+# CORS cross origins resource scripting
